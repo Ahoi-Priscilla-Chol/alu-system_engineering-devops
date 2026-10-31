@@ -44,3 +44,9 @@ EOF
 sudo haproxy -c -f /etc/haproxy/haproxy.cfg
 sudo systemctl enable haproxy
 sudo service haproxy restart
+
+# Give HAProxy a moment to start, then show which server answers
+sleep 5
+for _ in 1 2 3 4; do
+	curl -sI localhost | grep X-Served-By
+done
