@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Installs Nginx, serves "Hello World!" on /, and 301-redirects /redirect_me
+
+sudo apt-get update -y
+sudo apt-get install -y nginx
+
+# Page served at /
+echo "Hello World!" | sudo tee /var/www/html/index.html > /dev/null
+
+# Write the full default server config, including the redirect
+sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+
+	location /redirect_me {
+		return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
+	}
+}
+EOF
+
+# Test config, then restart nginx
+sudo nginx -t
+sudo service nginx restart
