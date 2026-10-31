@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Installs Nginx, serves "Hello World!" on /, redirects /redirect_me,
+# and serves a custom 404 page
+
+sudo apt-get update -y
+sudo apt-get install -y nginx
+
+# Page served at /
+echo "Hello World!" | sudo tee /var/www/html/index.html > /dev/null
+
+# Custom 404 page
+sudo tee /var/www/html/404.html > /dev/null << 'EOF'
+Ceci n'est pas une page
+EOF
+
+# Write the full default server config
+sudo tee /etc/nginx/sites-available/default > /dev/null << 'EOF'
+server {
+	listen 80 default_server;
+	listen [::]:80 default_server;
+
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	error_page 404 /404.html;
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+
+	location = /404.html {
+		internal;
+	}
+
+	location /redirect_me {
+		return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
+	}
+}
+EOF
+
+# Test config, then restart nginx
+sudo nginx -t
+sudo service nginx restart
