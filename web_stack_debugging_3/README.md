@@ -1,0 +1,4 @@
+# Web Stack Debugging 3
+
+- `0-strace_is_your_friend.pp`: Puppet manifest that fixes the Apache 500
+  error found with `strace`.
