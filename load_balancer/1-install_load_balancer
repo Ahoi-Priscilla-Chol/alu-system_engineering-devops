@@ -50,3 +50,6 @@ sleep 5
 for _ in 1 2 3 4; do
 	curl -sI localhost | grep X-Served-By
 done
+
+# Show the backend servers HAProxy is configured with
+grep "server " /etc/haproxy/haproxy.cfg
