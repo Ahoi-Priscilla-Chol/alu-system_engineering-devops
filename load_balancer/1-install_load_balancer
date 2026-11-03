@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Installs and configures HAProxy to load balance web-01 and web-02 (roundrobin)
+echo "Configuring HAProxy to balance 7336-web-01 and 7336-web-02 (roundrobin)"
 
 sudo apt-get update -y
 sudo apt-get install -y haproxy
