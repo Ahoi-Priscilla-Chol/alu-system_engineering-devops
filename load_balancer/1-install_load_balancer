@@ -45,3 +45,8 @@ EOF
 # Enable at boot and restart through the init script
 sudo systemctl enable haproxy 2> /dev/null
 sudo service haproxy restart
+
+# Show which backend answers each request (roundrobin check)
+sleep 2
+curl -Is localhost | grep -i x-served-by
+curl -Is localhost | grep -i x-served-by
