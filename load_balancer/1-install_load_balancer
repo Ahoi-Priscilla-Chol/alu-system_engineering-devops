@@ -50,3 +50,6 @@ sudo service haproxy restart
 sleep 2
 curl -Is localhost | grep -i x-served-by
 curl -Is localhost | grep -i x-served-by
+
+# Show the configured backend servers
+grep "^    server" /etc/haproxy/haproxy.cfg
