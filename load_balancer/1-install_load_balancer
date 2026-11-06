@@ -1,56 +1,45 @@
 #!/usr/bin/env bash
-# Installs and configures HAProxy to load balance web-01 and web-02 (roundrobin)
-echo "Configuring HAProxy to balance 7336-web-01 and 7336-web-02 (roundrobin)"
+# Installs and configures HAProxy on lb-01 to balance traffic between web-01 and web-02 (roundrobin)
 
 sudo apt-get update -y
 sudo apt-get install -y haproxy
 
-# Allow HAProxy to be managed by its init script
-echo "ENABLED=1" | sudo tee /etc/default/haproxy > /dev/null
+# Let the init script manage HAProxy (needed on older Ubuntu releases)
+if [ -f /etc/default/haproxy ]; then
+    sudo sed -i 's/^ENABLED=.*/ENABLED=1/' /etc/default/haproxy
+fi
 
 # Write the HAProxy configuration
 sudo tee /etc/haproxy/haproxy.cfg > /dev/null << 'EOF'
 global
-	log /dev/log local0
-	log /dev/log local1 notice
-	chroot /var/lib/haproxy
-	stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-	stats timeout 30s
-	user haproxy
-	group haproxy
-	daemon
-	h1-case-adjust x-served-by X-Served-By
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
 
 defaults
-	log global
-	mode http
-	option httplog
-	option dontlognull
-	timeout connect 5000
-	timeout client 50000
-	timeout server 50000
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
 
 frontend http_front
-	bind *:80
-	option h1-case-adjust-bogus-client
-	default_backend web_servers
+    bind *:80
+    default_backend http_back
 
-backend web_servers
-	balance roundrobin
-	server 7336-web-01 18.175.143.138:80 check
-	server 7336-web-02 3.8.8.209:80 check
+backend http_back
+    balance roundrobin
+    server 7336-web-01 18.175.143.138:80 check
+    server 7336-web-02 3.8.8.209:80 check
 EOF
 
-# Check the configuration, then enable and restart HAProxy
-sudo haproxy -c -f /etc/haproxy/haproxy.cfg
-sudo systemctl enable haproxy
+# Enable at boot and restart through the init script
+sudo systemctl enable haproxy 2> /dev/null
 sudo service haproxy restart
-
-# Give HAProxy a moment to start, then show which server answers
-sleep 5
-for _ in 1 2 3 4; do
-	curl -sI localhost | grep X-Served-By
-done
-
-# Show the backend servers HAProxy is configured with
-grep "server " /etc/haproxy/haproxy.cfg
